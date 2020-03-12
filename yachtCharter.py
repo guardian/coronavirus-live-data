@@ -1,0 +1,45 @@
+import simplejson as json
+import boto3
+import os
+
+AWS_KEY = os.environ['AWS_ACCESS_KEY_ID']
+AWS_SECRET = os.environ['AWS_SECRET_ACCESS_KEY']
+
+def syncData(jsonObject,id):
+	
+	finalJson = json.dumps(jsonObject, indent=4)
+
+	print("Connecting to S3")
+	bucket = 'gdn-cdn'
+
+	session = boto3.Session(
+	aws_access_key_id=AWS_KEY,
+	aws_secret_access_key=AWS_SECRET,
+	)
+	s3 = session.resource('s3')
+
+	key = "yacht-charter-data/{id}.json".format(id=id)
+	object = s3.Object(bucket, key)
+	object.put(Body=finalJson, CacheControl="max-age=90", ACL='public-read', ContentType="application/json")
+
+	print("JSON is updated")
+
+	print("data", "https://interactive.guim.co.uk/yacht-charter-data/{id}.json".format(id=id))
+
+def yachtCharter(template, data, chartName, chartId=[{"type":"linechart"}], key=[], periods=[], labels=[]):
+
+	jsonDictObject = {
+        "sheets":{
+            "template":template,
+            "data":data,
+            "labels":labels,
+            "key":key,
+            "periods":periods,
+            "labels":labels,
+            "chartId":chartId
+            }
+    }
+
+	#%% Sync
+
+	syncData(jsonDictObject, chartName)
