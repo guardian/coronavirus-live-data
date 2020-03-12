@@ -16,7 +16,7 @@ includes = ["Australia", "Italy", "Japan", "Mainland China", "Republic of Korea"
 
 confirmed = confirmed.groupby(["Country/Region"]).sum()
 
-over100 = confirmed[confirmed.iloc[ : , -2 ] > 50]
+over100 = confirmed[confirmed.iloc[ : , -2 ] > 100]
 
 over100 = over100.drop(['Lat','Long'], axis=1)
 
@@ -42,7 +42,7 @@ since100 = pd.DataFrame()
 
 for col in includes:
     print(col)
-    start = (over100[col] >= 50).idxmax()
+    start = (over100[col] >= 100).idxmax()
     tempSeries = over100[col][start:]
     tempSeries = tempSeries.replace({0:np.nan})
     tempSeries = tempSeries.reset_index()
