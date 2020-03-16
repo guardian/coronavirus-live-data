@@ -3,20 +3,78 @@
 import pandas as pd
 from getData import getData
 import numpy as np
+from datetime import datetime
+from syncData import syncData
+import simplejson as json
+
+#%%
 
 # Un-comment to update for latest data
 
-# getData()
+getData()
+
+preview = ""
+# preview = "_preview"
+
+#%%
+
+# For deaths and reovered data
+
+def processData(filePath):
+    
+    includes = ["Australia", "Italy", "Japan", "China", "Korea, South", "United Kingdom", "US", "Singapore", "Iran", "Total"]
+    
+    df = pd.read_csv(filePath)
+
+    df.loc['Total'] = df.sum(numeric_only=True, axis=0)
+    
+    df.loc[['Total'],["Country/Region"]] = "Total"
+    
+    df = df.groupby(["Country/Region"]).sum()
+    
+    df = df.drop(['Lat','Long'], axis=1)
+    
+    df = df.T
+    
+    df.index = pd.to_datetime(df.index, format="%m/%d/%y")
+    
+    df = df.sort_index(ascending=1)
+    
+    df.index = df.index.strftime('%Y-%m-%d')
+    
+    df = df[includes]
+    
+    return df
+
+deaths = processData("time_series_19-covid-Deaths.csv")
+recovered = processData("time_series_19-covid-Recovered.csv")
+
+deaths_daily = deaths.sub(deaths.shift())
+deaths_daily.iloc[0] = deaths.iloc[0]
+
+recovered_daily = recovered.sub(recovered.shift())
+recovered_daily.iloc[0] = recovered.iloc[0]
+
+
+#%%
+
+# For confirmed cases, since we want it for charts
 
 confirmed = pd.read_csv("time_series_19-covid-Confirmed.csv")
 
 exclude = ["Diamond Princess cruise ship"]
 
-includes = ["Australia", "Italy", "Japan", "Mainland China", "Republic of Korea", "UK", "US", "Hong Kong SAR", "Singapore", "Iran (Islamic Republic of)"]
+includes = ["Australia", "Italy", "Japan", "China", "Korea, South", "United Kingdom", "US", "Singapore", "Iran", "Total"]
 
-confirmed = confirmed.groupby(["Country/Region"]).sum()
+shortlist = ["Australia", "United Kingdom", "US"]
 
-over100 = confirmed[confirmed.iloc[ : , -2 ] > 100]
+confirmed.loc['Total'] = confirmed.sum(numeric_only=True, axis=0)
+
+confirmed.loc[['Total'],["Country/Region"]] = "Total"
+
+confirmed_country = confirmed.groupby(["Country/Region"]).sum()
+
+over100 = confirmed_country[confirmed_country.iloc[ : , -1 ] > 100]
 
 over100 = over100.drop(['Lat','Long'], axis=1)
 
@@ -26,107 +84,62 @@ over100.index = pd.to_datetime(over100.index, format="%m/%d/%y")
 
 over100 = over100.sort_index(ascending=1)
 
-over100.index = over100.index.strftime('%Y-%m-%d') 
+over100.index = over100.index.strftime('%Y-%m-%d')
 
-replace = {"Republic of Korea":"South Korea","Hong Kong SAR":"Hong Kong", "Iran (Islamic Republic of)":"Iran"}
-
-pctChange = over100.pct_change()*100
-
-pctChange = pctChange[includes]
+confirmed_daily = over100.sub(over100.shift())
+confirmed_daily.iloc[0] = over100.iloc[0]
+#%%
+confirmed_daily.to_csv("data-output/confirmed_daily.csv")
 
 #%%
 
-# Days since 100 cases
+# To save locally
+deaths.reset_index().to_json('data-output/deaths.json', orient='records')
+deaths_daily.reset_index().to_json('data-output/deaths_daily.json', orient='records')
 
-since100 = pd.DataFrame()
+over100.reset_index().to_json('data-output/confirmed.json', orient='records')
+confirmed_daily.reset_index().to_json('data-output/confirmed_daily.json', orient='records')
 
-for col in includes:
-    print(col)
-    start = (over100[col] >= 100).idxmax()
-    tempSeries = over100[col][start:]
-    tempSeries = tempSeries.replace({0:np.nan})
-    tempSeries = tempSeries.reset_index()
-    tempSeries = tempSeries.drop(['index'], axis=1)
-    since100 = pd.concat([since100, tempSeries], axis=1)
-
-since100 = since100.rename(columns=replace)
-
-#%%
-
-import plotly.graph_objs as go
-import plotly.io as pio
-from plotly.offline import plot
-from yachtCharter import yachtCharter
-
-#%%
-
-# Log plot
-
-data = [go.Scatter(
-                x = since100.index,
-                y = since100[col],
-                mode='lines',
-                name = col
-            ) for col in since100.columns]
-
-layout = go.Layout(
-        title="Coronavirus confirmed cases",
-        width=800,
-        height=600,
-        yaxis={"type":"log"}
-        )   
-    
-fig = go.Figure(data=data, layout=layout)
-    
-# plot(fig, filename="plots/confirmed-cases")
+recovered.reset_index().to_json('data-output/recovered.json', orient='records')
+recovered_daily.reset_index().to_json('data-output/recovered_daily.json', orient='records')
 
 
-template = [
-        {
-            "title": "Confirmed cases of Covid-19 for selected countries",
-            "subtitle": "Showing the number of cases since the day of the 50th case, using a log scale",
-            "footnote": "",
-            "source": "<a href='https://www.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6' target='_blank'>Johns Hopkins University</a>, based on a <a href='https://blog.grattan.edu.au/2020/03/australian-governments-can-choose-to-slow-the-spread-of-coronavirus-but-they-must-act-immediately/'>chart by the Grattan Institute</a>",
-            "dateFormat": "",
-            "yScaleType":"scaleLog",
-            "xAxisLabel": "Days since 50th case",
-            "yAxisLabel": "",
-            "minY": "",
-            "maxY":"100000",
-            "periodDateFormat":"",
-            "margin-left": "50",
-            "margin-top": "20",
-            "margin-bottom": "20",
-            "margin-right": "20"
-        }
-    ]
-key = []
-periods = []
-labels = []
-chartId = [{"type":"linechart"}]
-since100.fillna('', inplace=True)
-since100 = since100.reset_index()
-chartData = since100.to_dict('records')
+# To uplodad to S3
 
-yachtCharter(template=template, data=chartData, chartId=[{"type":"linechart"}], chartName="cases-of-covid-19-since-100-live")
+deathsData = json.dumps(deaths.reset_index().to_dict('records'))
+deathsDailyData = json.dumps(deaths_daily.reset_index().to_dict('records'))
 
-#%%
+confirmedData = json.dumps(over100.reset_index().to_dict('records'))
+confirmedDailyData = json.dumps(confirmed_daily.reset_index().to_dict('records'))
 
-# % change plot
+recoveredData = json.dumps(recovered.reset_index().to_dict('records'))
+recoveredDailyData = json.dumps(recovered_daily.reset_index().to_dict('records'))
 
-data = [go.Scatter(
-                x = pctChange.index,
-                y = pctChange[col],
-                mode='lines',
-                name = col
-            ) for col in pctChange.columns]
+syncData(deathsData, "2020/03/coronavirus-widget-data", "deaths{preview}.json".format(preview=preview))
+syncData(deathsDailyData, "2020/03/coronavirus-widget-data", "deaths_daily{preview}.json".format(preview=preview))
+syncData(confirmedData, "2020/03/coronavirus-widget-data", "confirmed{preview}.json".format(preview=preview))
+syncData(confirmedDailyData, "2020/03/coronavirus-widget-data", "confirmed_daily{preview}.json".format(preview=preview))
+syncData(recoveredData, "2020/03/coronavirus-widget-data", "recovered{preview}.json".format(preview=preview))
+syncData(recoveredDailyData, "2020/03/coronavirus-widget-data", "recovered_daily{preview}.json".format(preview=preview))
 
-layout = go.Layout(
-        title="Coronavirus confirmed cases",
-        width=800,
-        height=600
-        )   
-    
-fig = go.Figure(data=data, layout=layout)
-    
-# plot(fig, filename="plots/confirmed-cases-pct")
+# Australian stuff
+
+aus_confirmed = confirmed[confirmed['Country/Region'] == "Australia"]
+
+aus_confirmed = aus_confirmed.drop(['Lat','Long', 'Country/Region'], axis=1)
+
+aus_confirmed = aus_confirmed.set_index('Province/State')
+
+aus_confirmed = aus_confirmed.T
+
+# aus_confirmed.to_csv('blah.csv')
+
+aus_confirmed.index = pd.to_datetime(aus_confirmed.index, format="%m/%d/%y")
+
+aus_confirmed = aus_confirmed.sort_index(ascending=1)
+
+aus_confirmed.index = aus_confirmed.index.strftime('%Y-%m-%d')
+
+most_recent = aus_confirmed[-1:]
+
+most_recent.to_csv("data-output/aus-recent.csv")
