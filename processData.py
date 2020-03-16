@@ -13,6 +13,8 @@ import simplejson as json
 
 getData()
 
+# Using _preview will ensure new data does not overwrite the live data
+
 preview = ""
 # preview = "_preview"
 
