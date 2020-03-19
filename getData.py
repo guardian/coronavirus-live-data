@@ -37,6 +37,6 @@ def getData():
 		json.dump(r.json(), f)
 		
 # un-comment to just download the files:
-getData()
+# getData()
 	
 
