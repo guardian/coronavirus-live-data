@@ -1,4 +1,4 @@
-import scheduleß
+import schedule
 from processData import runScripts
 
 runScripts()
