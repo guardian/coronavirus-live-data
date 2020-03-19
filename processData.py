@@ -60,6 +60,24 @@ recovered_daily.iloc[0] = recovered.iloc[0]
 
 #%%
 
+with open('latest.json') as json_file:
+    latestJson = json.load(json_file)
+    latestObj = []
+    for row in latestJson['features']:
+        latestObj.append(row['attributes'])    
+        
+    latest = pd.DataFrame(latestObj)
+    
+    latest_country = latest.groupby(["Country_Region"]).sum()
+    latest_country.loc['Total'] = latest_country.sum()
+    
+    latestData = json.dumps(latest_country.reset_index().to_dict('records'))
+    
+    
+    
+    syncData(latestData, "2020/03/coronavirus-widget-data", "latest{preview}.json".format(preview=preview))
+#%%
+
 # For confirmed cases, since we want it for charts
 
 confirmed = pd.read_csv("time_series_19-covid-Confirmed.csv")
@@ -105,7 +123,6 @@ confirmed_daily.reset_index().to_json('data-output/confirmed_daily.json', orient
 recovered.reset_index().to_json('data-output/recovered.json', orient='records')
 recovered_daily.reset_index().to_json('data-output/recovered_daily.json', orient='records')
 
-
 # To uplodad to S3
 
 deathsData = json.dumps(deaths.reset_index().to_dict('records'))
@@ -141,6 +158,7 @@ aus_confirmed.index = pd.to_datetime(aus_confirmed.index, format="%m/%d/%y")
 aus_confirmed = aus_confirmed.sort_index(ascending=1)
 
 aus_confirmed.index = aus_confirmed.index.strftime('%Y-%m-%d')
+
 
 most_recent = aus_confirmed[-1:]
 
