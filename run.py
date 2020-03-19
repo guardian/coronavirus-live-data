@@ -1,6 +1,4 @@
-import schedule
-from test import test
-from datetime import datetime
+import scheduleß
 from processData import runScripts
 
 runScripts()
