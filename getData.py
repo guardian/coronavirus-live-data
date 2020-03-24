@@ -2,17 +2,15 @@
 # And also the latest case figures from the ArcGIS feature server
 
 import simplejson as json
-
 def getData():
-
+	
 	# Get time series data
 
 	import requests
 
 	files = [
-	"time_series_19-covid-Confirmed.csv",
-	"time_series_19-covid-Deaths.csv",
-	"time_series_19-covid-Recovered.csv"
+	"time_series_covid19_deaths_global.csv",
+	"time_series_covid19_confirmed_global.csv"
 	]
 
 	headers = {'Accept': 'application/vnd.github.v3.raw'}

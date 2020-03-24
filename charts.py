@@ -17,7 +17,63 @@ states = requests.get('https://interactive.guim.co.uk/docsdata/1q5gdePANXci8enui
 
 #%%
 
-states_df = pd.DataFrame(states['latest totals'])
+state_order = ['NSW','VIC',	'QLD','SA', 'WA','TAS',	'ACT','NT']
+   
+states_df = pd.DataFrame(states['updates'])
+states_df.Date = pd.to_datetime(states_df.Date, format="%d/%m/%Y")
+states_df['Cumulative case count'] = pd.to_numeric(states_df['Cumulative case count'])
+states_df = states_df.dropna(axis=0,subset=['Cumulative case count'])
+states_df = states_df.sort_values(['Date','State', 'Cumulative case count']).drop_duplicates(['State', 'Date'], keep='last')
+
+states_df = states_df.pivot(index='Date', columns='State', values='Cumulative case count')
+
+#%%
+
+states_df_daily = pd.DataFrame()
+
+for col in state_order:
+	print(col)
+	tempSeries = states_df[col].dropna()
+	tempSeries = tempSeries.sub(tempSeries.shift())
+	tempSeries.iloc[0] = states_df[col].dropna().iloc[0]
+	states_df_daily = pd.concat([states_df_daily, tempSeries], axis=1)
+
+states_df_daily.iloc[0] = states_df.iloc[0]
+
+#%%
+# states_df.at['2020-03-19', 'NT'] = 0
+# states_df.iloc[0] = 0
+
+# states_df_daily = states_df.sub(states_df.shift())
+
+
+
+date_index = pd.date_range(start='2020-01-23', end=states_df.index[-1])
+
+states_df = states_df.reindex(date_index)
+
+states_df_daily = states_df_daily.reindex(date_index)
+
+
+states_df.index = states_df.index.strftime('%Y-%m-%d')
+
+states_df_daily = states_df_daily.fillna(0)
+states_df_daily.index = states_df_daily.index.strftime('%Y-%m-%d')
+
+states_df = states_df.fillna(method='ffill')
+states_df = states_df.fillna(0)
+states_df = states_df[state_order]
+states_df.to_csv('data-output/states.csv')
+
+states_df_daily = states_df_daily[state_order]
+
+states_df_daily.to_csv('data-output/states-daily.csv')
+
+#%%
+
+
+
+
 
 #%%
 
@@ -118,7 +174,7 @@ makeSince100Chart(only100)
 
 #%%
 
-def makeStackedAusChart(df):
+def makeCumulativeChart(df):
     
     lastUpdatedInt = df.index[-1]
 
@@ -127,7 +183,7 @@ def makeStackedAusChart(df):
                 "title": "Cumulative count of confirmed Covid-19 cases by state and territory",
                 "subtitle": "Last updated {date}".format(date=lastUpdatedInt),
                 "footnote": "",
-                "source": " | Source: <a href='https://www.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6' target='_blank'>Johns Hopkins University</a>",
+                "source": " | Source: <a href='' target='_blank'>Guardian Australia analysis of state and territory data</a>",
                 "dateFormat": "%Y-%m-%d",
                 "xAxisLabel": "",
                 "yAxisLabel": "Cumulative cases",
@@ -137,7 +193,8 @@ def makeStackedAusChart(df):
                 "margin-left": "50",
                 "margin-top": "20",
                 "margin-bottom": "20",
-                "margin-right": "20"
+                "margin-right": "20",
+				"xAxisDateFormat": "%b %d"
             }
         ]
     key = []
@@ -150,9 +207,43 @@ def makeStackedAusChart(df):
 
     yachtCharter(template=template, data=chartData, chartId=chartId, chartName="australian-covid-cases-2020")
 
-# makeStackedAusChart(aus_confirmed)
-    
+makeCumulativeChart(states_df)
 
+def makeDailyChart(df):
+    
+    lastUpdatedInt = df.index[-1]
+
+    template = [
+            {
+                "title": "Daily count of confirmed Covid-19 cases by state and territory",
+                "subtitle": "Last updated {date}".format(date=lastUpdatedInt),
+                "footnote": "",
+                "source": " | Source: <a href='' target='_blank'>Guardian Australia analysis of state and territory data</a>",
+                "dateFormat": "%Y-%m-%d",
+                "xAxisLabel": "",
+                "yAxisLabel": "Cumulative cases",
+                "timeInterval":"day",
+                "tooltip":"TRUE",
+                "periodDateFormat":"",
+                "margin-left": "50",
+                "margin-top": "20",
+                "margin-bottom": "20",
+                "margin-right": "20",
+				"xAxisDateFormat": "%b %d"
+            }
+        ]
+    key = []
+    periods = []
+    labels = []
+    chartId = [{"type":"stackedbarchart"}]
+    df.fillna('', inplace=True)
+    df = df.reset_index()
+    chartData = df.to_dict('records')
+
+    yachtCharter(template=template, data=chartData, chartId=chartId, chartName="australian-daily-covid-cases-2020")
+
+makeDailyChart(states_df_daily)
+    
 
 #%%
 

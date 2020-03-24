@@ -54,14 +54,14 @@ def runScripts():
         
         return df
 
-    deaths = processData("time_series_19-covid-Deaths.csv")
-    recovered = processData("time_series_19-covid-Recovered.csv")
+    deaths = processData("time_series_covid19_deaths_global.csv")
+    # recovered = processData("time_series_19-covid-Recovered.csv")
 
     deaths_daily = deaths.sub(deaths.shift())
     deaths_daily.iloc[0] = deaths.iloc[0]
 
-    recovered_daily = recovered.sub(recovered.shift())
-    recovered_daily.iloc[0] = recovered.iloc[0]
+    # recovered_daily = recovered.sub(recovered.shift())
+    # recovered_daily.iloc[0] = recovered.iloc[0]
 
     #%%
 
@@ -83,7 +83,7 @@ def runScripts():
 
     # For confirmed cases, since we want it for charts
 
-    confirmed = pd.read_csv("time_series_19-covid-Confirmed.csv")
+    confirmed = pd.read_csv("time_series_covid19_confirmed_global.csv")
 
     exclude = ["Diamond Princess cruise ship"]
 
@@ -117,14 +117,15 @@ def runScripts():
     #%%
 
     # To save locally
+	
     deaths.reset_index().to_json('data-output/deaths.json', orient='records')
     deaths_daily.reset_index().to_json('data-output/deaths_daily.json', orient='records')
 
     over100.reset_index().to_json('data-output/confirmed.json', orient='records')
     confirmed_daily.reset_index().to_json('data-output/confirmed_daily.json', orient='records')
 
-    recovered.reset_index().to_json('data-output/recovered.json', orient='records')
-    recovered_daily.reset_index().to_json('data-output/recovered_daily.json', orient='records')
+    # recovered.reset_index().to_json('data-output/recovered.json', orient='records')
+    # recovered_daily.reset_index().to_json('data-output/recovered_daily.json', orient='records')
 
     # To uplodad to S3
 
@@ -134,15 +135,15 @@ def runScripts():
     confirmedData = json.dumps(over100.reset_index().to_dict('records'))
     confirmedDailyData = json.dumps(confirmed_daily.reset_index().to_dict('records'))
 
-    recoveredData = json.dumps(recovered.reset_index().to_dict('records'))
-    recoveredDailyData = json.dumps(recovered_daily.reset_index().to_dict('records'))
+    # recoveredData = json.dumps(recovered.reset_index().to_dict('records'))
+    # recoveredDailyData = json.dumps(recovered_daily.reset_index().to_dict('records'))
 
     syncData(deathsData, "2020/03/coronavirus-widget-data", "deaths{preview}.json".format(preview=preview))
     syncData(deathsDailyData, "2020/03/coronavirus-widget-data", "deaths_daily{preview}.json".format(preview=preview))
     syncData(confirmedData, "2020/03/coronavirus-widget-data", "confirmed{preview}.json".format(preview=preview))
     syncData(confirmedDailyData, "2020/03/coronavirus-widget-data", "confirmed_daily{preview}.json".format(preview=preview))
-    syncData(recoveredData, "2020/03/coronavirus-widget-data", "recovered{preview}.json".format(preview=preview))
-    syncData(recoveredDailyData, "2020/03/coronavirus-widget-data", "recovered_daily{preview}.json".format(preview=preview))
+    # syncData(recoveredData, "2020/03/coronavirus-widget-data", "recovered{preview}.json".format(preview=preview))
+    # syncData(recoveredDailyData, "2020/03/coronavirus-widget-data", "recovered_daily{preview}.json".format(preview=preview))
 
     # Australian stuff
 
@@ -167,3 +168,5 @@ def runScripts():
     most_recent.to_csv("data-output/aus-recent.csv")
 
     print("done")
+	
+# runScripts()
