@@ -7,166 +7,115 @@ from datetime import datetime
 from syncData import syncData
 import simplejson as json
 from datetime import datetime
+import requests
 import schedule
 
 #%%
 
 def runScripts():
 
-    print(print(datetime.now()))
+	state_order = ['NSW','VIC',	'QLD','SA', 'WA','TAS',	'ACT','NT']
 
-    # Un-comment to update for latest data
+	states = requests.get('https://interactive.guim.co.uk/docsdata/1q5gdePANXci8enuiS4oHUJxcxC13d6bjMRSicakychE.json').json()['sheets']
 
-    getData()
+	states_df = pd.DataFrame(states['updates'])
+	states_df.Date = pd.to_datetime(states_df.Date, format="%d/%m/%Y")
+	states_df['Cumulative case count'] = pd.to_numeric(states_df['Cumulative case count'])
+	states_df = states_df.dropna(axis=0,subset=['Cumulative case count'])
+	states_df = states_df.sort_values(['Date','State', 'Cumulative case count']).drop_duplicates(['State', 'Date'], keep='last')
 
-    # Using _preview will ensure new data does not overwrite the live data
+	states_df_og = states_df
 
-    preview = ""
-    # preview = "_preview"
+	states_df = states_df.pivot(index='Date', columns='State', values='Cumulative case count')
 
-    #%%
+	states_df_daily = pd.DataFrame()
 
-    # For deaths and reovered data
+	for col in state_order:
+		print(col)
+		tempSeries = states_df[col].dropna()
+		tempSeries = tempSeries.sub(tempSeries.shift())
+		tempSeries.iloc[0] = states_df[col].dropna().iloc[0]
+		states_df_daily = pd.concat([states_df_daily, tempSeries], axis=1)
 
-    def processData(filePath):
-        
-        includes = ["Australia", "Italy", "Japan", "China", "Korea, South", "United Kingdom", "US", "Singapore", "Iran", "Total"]
-        
-        df = pd.read_csv(filePath)
+	states_df_daily.iloc[0] = states_df.iloc[0]
 
-        df.loc['Total'] = df.sum(numeric_only=True, axis=0)
-        
-        df.loc[['Total'],["Country/Region"]] = "Total"
-        
-        df = df.groupby(["Country/Region"]).sum()
-        
-        df = df.drop(['Lat','Long'], axis=1)
-        
-        df = df.T
-        
-        df.index = pd.to_datetime(df.index, format="%m/%d/%y")
-        
-        df = df.sort_index(ascending=1)
-        
-        df.index = df.index.strftime('%Y-%m-%d')
-        
-        df = df[includes]
-        
-        return df
+	date_index = pd.date_range(start='2020-01-22', end=states_df.index[-1])
 
-    deaths = processData("time_series_covid19_deaths_global.csv")
-    # recovered = processData("time_series_19-covid-Recovered.csv")
 
-    deaths_daily = deaths.sub(deaths.shift())
-    deaths_daily.iloc[0] = deaths.iloc[0]
+	states_df_daily = states_df_daily.reindex(date_index)
 
-    # recovered_daily = recovered.sub(recovered.shift())
-    # recovered_daily.iloc[0] = recovered.iloc[0]
+	states_df_daily = states_df_daily.fillna(0)
+	states_df_daily.index = states_df_daily.index.strftime('%Y-%m-%d')
+	states_df_daily = states_df_daily[state_order]
+	daily_total = pd.DataFrame()
+	daily_total['Australia'] = states_df_daily.sum(axis=1)
 
-    #%%
+		
+	print(print(datetime.now()))
 
-    with open('latest.json') as json_file:
-        latestJson = json.load(json_file)
-        latestObj = []
-        for row in latestJson['features']:
-            latestObj.append(row['attributes'])    
-            
-        latest = pd.DataFrame(latestObj)
-        
-        latest_country = latest.groupby(["Country_Region"]).sum()
-        latest_country.loc['Total'] = latest_country.sum()
-        
-        latestData = json.dumps(latest_country.reset_index().to_dict('records'))
-        
-        syncData(latestData, "2020/03/coronavirus-widget-data", "latest{preview}.json".format(preview=preview))
-    #%%
+	# Un-comment to update for latest data
 
-    # For confirmed cases, since we want it for charts
+	getData()
 
-    confirmed = pd.read_csv("time_series_covid19_confirmed_global.csv")
+	# Using _preview will ensure new data does not overwrite the live data
 
-    exclude = ["Diamond Princess cruise ship"]
+	preview = ""
+	# preview = "_preview"
 
-    includes = ["Australia", "Italy", "Japan", "China", "Korea, South", "United Kingdom", "US", "Singapore", "Iran", "Total"]
+	with open('latest.json') as json_file:
+		latestJson = json.load(json_file)
+		latestObj = []
+		shortlist = ["Australia", "United Kingdom", "US"]
+		
+		for row in latestJson['features']:
+			latestObj.append(row['attributes'])    
+			
+		latest = pd.DataFrame(latestObj)
+		
+		latest_country = latest.groupby(["Country_Region"]).sum()
+		latest_country.loc['Total'] = latest_country.sum()
+		
+		latestData = json.dumps(latest_country.reset_index().to_dict('records'))
+		
+		syncData(latestData, "2020/03/coronavirus-widget-data", "latest{preview}.json".format(preview=preview))
 
-    shortlist = ["Australia", "United Kingdom", "US"]
+	# For confirmed cases, since we want it for charts
 
-    confirmed.loc['Total'] = confirmed.sum(numeric_only=True, axis=0)
+	confirmed = pd.read_csv("time_series_covid19_confirmed_global.csv")
 
-    confirmed.loc[['Total'],["Country/Region"]] = "Total"
+	shortlist = ["United Kingdom", "US", "Total"]
 
-    confirmed_country = confirmed.groupby(["Country/Region"]).sum()
+	confirmed.loc['Total'] = confirmed.sum(numeric_only=True, axis=0)
 
-    over100 = confirmed_country[confirmed_country.iloc[ : , -1 ] > 100]
+	confirmed.loc[['Total'],["Country/Region"]] = "Total"
 
-    over100 = over100.drop(['Lat','Long'], axis=1)
+	confirmed_country = confirmed.groupby(["Country/Region"]).sum()
 
-    over100 = over100.T
+	over100 = confirmed_country[confirmed_country.iloc[ : , -1 ] > 100]
 
-    over100.index = pd.to_datetime(over100.index, format="%m/%d/%y")
+	over100 = over100.drop(['Lat','Long'], axis=1)
 
-    over100 = over100.sort_index(ascending=1)
+	over100 = over100.T
 
-    over100.index = over100.index.strftime('%Y-%m-%d')
+	over100.index = pd.to_datetime(over100.index, format="%m/%d/%y")
 
-    confirmed_daily = over100.sub(over100.shift())
-    confirmed_daily.iloc[0] = over100.iloc[0]
-    #%%
-    confirmed_daily.to_csv("data-output/confirmed_daily.csv")
+	over100 = over100.sort_index(ascending=1)
 
-    #%%
+	over100.index = over100.index.strftime('%Y-%m-%d')
 
-    # To save locally
+	confirmed_daily = over100.sub(over100.shift())
+	confirmed_daily.iloc[0] = over100.iloc[0]
+
+	confirmed_daily_short = confirmed_daily[shortlist]
+	confirmed_daily_short['Australia'] = daily_total['Australia']
+
+	confirmed_daily.to_csv("data-output/confirmed_daily.csv")
+	confirmed_daily.reset_index().to_json('data-output/confirmed_daily.json', orient='records')
+
+	# To uplodad to S3
+
+	confirmedDailyData = json.dumps(confirmed_daily_short.reset_index().to_dict('records'))
+
+	syncData(confirmedDailyData, "2020/03/coronavirus-widget-data", "confirmed_daily{preview}.json".format(preview=preview))
 	
-    deaths.reset_index().to_json('data-output/deaths.json', orient='records')
-    deaths_daily.reset_index().to_json('data-output/deaths_daily.json', orient='records')
-
-    over100.reset_index().to_json('data-output/confirmed.json', orient='records')
-    confirmed_daily.reset_index().to_json('data-output/confirmed_daily.json', orient='records')
-
-    # recovered.reset_index().to_json('data-output/recovered.json', orient='records')
-    # recovered_daily.reset_index().to_json('data-output/recovered_daily.json', orient='records')
-
-    # To uplodad to S3
-
-    deathsData = json.dumps(deaths.reset_index().to_dict('records'))
-    deathsDailyData = json.dumps(deaths_daily.reset_index().to_dict('records'))
-
-    confirmedData = json.dumps(over100.reset_index().to_dict('records'))
-    confirmedDailyData = json.dumps(confirmed_daily.reset_index().to_dict('records'))
-
-    # recoveredData = json.dumps(recovered.reset_index().to_dict('records'))
-    # recoveredDailyData = json.dumps(recovered_daily.reset_index().to_dict('records'))
-
-    syncData(deathsData, "2020/03/coronavirus-widget-data", "deaths{preview}.json".format(preview=preview))
-    syncData(deathsDailyData, "2020/03/coronavirus-widget-data", "deaths_daily{preview}.json".format(preview=preview))
-    syncData(confirmedData, "2020/03/coronavirus-widget-data", "confirmed{preview}.json".format(preview=preview))
-    syncData(confirmedDailyData, "2020/03/coronavirus-widget-data", "confirmed_daily{preview}.json".format(preview=preview))
-    # syncData(recoveredData, "2020/03/coronavirus-widget-data", "recovered{preview}.json".format(preview=preview))
-    # syncData(recoveredDailyData, "2020/03/coronavirus-widget-data", "recovered_daily{preview}.json".format(preview=preview))
-
-    # Australian stuff
-
-    aus_confirmed = confirmed[confirmed['Country/Region'] == "Australia"]
-
-    aus_confirmed = aus_confirmed.drop(['Lat','Long', 'Country/Region'], axis=1)
-
-    aus_confirmed = aus_confirmed.set_index('Province/State')
-
-    aus_confirmed = aus_confirmed.T
-
-    # aus_confirmed.to_csv('blah.csv')
-
-    aus_confirmed.index = pd.to_datetime(aus_confirmed.index, format="%m/%d/%y")
-
-    aus_confirmed = aus_confirmed.sort_index(ascending=1)
-
-    aus_confirmed.index = aus_confirmed.index.strftime('%Y-%m-%d')
-
-    most_recent = aus_confirmed[-1:]
-
-    most_recent.to_csv("data-output/aus-recent.csv")
-
-    print("done")
-	
-# runScripts()
+runScripts()

@@ -34,6 +34,7 @@ def getData():
 	with open('latest.json', 'w') as f:
 		json.dump(r.json(), f)
 		
+
 # un-comment to just download the files:
 # getData()
 	
