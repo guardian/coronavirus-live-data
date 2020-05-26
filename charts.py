@@ -446,7 +446,7 @@ def makeDailyStatesChart(df):
 	template = [
 			{
 				"title": "Daily count of confirmed Covid-19 cases by state and territory",
-				"subtitle": "The most recent day is usually based on incomplete data. Last updated {date}".format(date=lastUpdatedInt),
+				"subtitle": "The most recent day is usually based on incomplete data. States can exclude previously reported cases which may result in a negative number, but we are backdating excluded cases where possible. Last updated {date}".format(date=lastUpdatedInt),
 				"footnote": "",
 				"source": " | Source: <a href='' target='_blank'>Guardian Australia analysis of state and territory data</a>",
 				"dateFormat": "%Y-%m-%d",
@@ -531,8 +531,8 @@ def makeHospitalsTable(df):
 	template = [
 			{
 				"title": "Deaths and hospitalisation figures by state and territory",
-				"subtitle": "NSW hospitalisation figures include admissions under the Hospital in the Home program. Last updated {date}".format(date=lastUpdatedInt),
-				"footnote": "",
+				"subtitle": "NSW hospitalisation figures include admissions under the Hospital in the Home program. Two deaths listed by Queensland Health are counted in NSW totals as the deaths occurred in NSW. Last updated {date}".format(date=lastUpdatedInt),
+				"footnote": "NSW hospitalisation figures include admissions under the Hospital in the Home program. Two deaths listed by Queensland Health are counted in NSW totals as the deaths occurred in NSW.",
 				"source": "Guardian Australia / Department of Prime Minister and Cabinet"
 			}
 		]

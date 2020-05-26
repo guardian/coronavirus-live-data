@@ -12,3 +12,7 @@ ecdc-total-cases.csv
 ecdc-new-cases.csv
 time_series_covid19_confirmed_global.csv
 time_series_covid19_deaths_global.csv
+country-features.xlsx
+ecdc-new-deaths.csv
+ecdc-total-deaths.csv
+regions.csv
