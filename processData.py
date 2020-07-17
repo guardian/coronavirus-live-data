@@ -14,7 +14,9 @@ from sendEmail import sendEmail
 #%%
 
 def runScripts():
-	print(1/0)
+	
+	# Uncomment the following to generate an exception 
+	# print(1/0)
 	state_order = ['NSW','VIC',	'QLD','SA', 'WA','TAS',	'ACT','NT']
 	
 	states = requests.get('https://interactive.guim.co.uk/docsdata/1q5gdePANXci8enuiS4oHUJxcxC13d6bjMRSicakychE.json').json()['sheets']
