@@ -17,6 +17,8 @@ def runScripts():
 	
 	# Uncomment the following to generate an exception 
 	# print(1/0)
+
+	pd.options.mode.chained_assignment = None  # default='warn'
 	state_order = ['NSW','VIC',	'QLD','SA', 'WA','TAS',	'ACT','NT']
 	
 	states = requests.get('https://interactive.guim.co.uk/docsdata/1q5gdePANXci8enuiS4oHUJxcxC13d6bjMRSicakychE.json').json()['sheets']
@@ -110,6 +112,7 @@ def runScripts():
 	confirmed_daily.iloc[0] = over100.iloc[0]
 	
 	confirmed_daily_short = confirmed_daily[shortlist]
+
 	confirmed_daily_short['Australia'] = daily_total['Australia']
 	confirmed_daily_short[confirmed_daily_short < 0] = 0
 	
