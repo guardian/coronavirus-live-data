@@ -4,7 +4,7 @@ import traceback
 
 doThings()
 
-schedule.every(30).seconds.do(doThings)
+schedule.every(1).hours.do(doThings)
 
 while True:
 	schedule.run_pending()

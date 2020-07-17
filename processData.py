@@ -8,7 +8,6 @@ from syncData import syncData
 import simplejson as json
 from datetime import datetime
 import requests
-import schedule
 import traceback
 from sendEmail import sendEmail
 
