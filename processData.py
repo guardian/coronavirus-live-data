@@ -122,11 +122,11 @@ def runScripts():
 
 	print("Done, data updated")
 
-def doThings():
-	try:
-		runScripts()
-	except Exception:
-		print(traceback.format_exc())
-		sendEmail(traceback.format_exc(), "corona data alers", ["nick.evershed@theguardian.com"])
+# def doThings():
+# 	try:
+# 		runScripts()
+# 	except Exception:
+# 		print(traceback.format_exc())
+# 		sendEmail(traceback.format_exc(), "corona data alers", ["nick.evershed@theguardian.com"])
 
-doThings()			
+runScripts()			
