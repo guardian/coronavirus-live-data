@@ -1,9 +1,10 @@
 import schedule
-from processData import runScripts
+from processData import doThings
+import traceback
 
-runScripts()
+doThings()
 
-schedule.every(1).hours.do(runScripts)
+schedule.every(30).seconds.do(doThings)
 
 while True:
 	schedule.run_pending()

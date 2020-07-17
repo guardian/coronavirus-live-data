@@ -8,6 +8,9 @@ import pandas as pd
 import numpy as np
 import requests
 
+test = ""
+# test = "-test"
+
 state_order = ['NSW','VIC',	'QLD','SA', 'WA','TAS',	'ACT','NT']
 
 #%%
@@ -17,7 +20,6 @@ getData()
 #%%
 
 states = requests.get('https://interactive.guim.co.uk/docsdata/1q5gdePANXci8enuiS4oHUJxcxC13d6bjMRSicakychE.json').json()['sheets']
-
 
 #%%
    
@@ -93,8 +95,113 @@ restack_states_daily = states_df_daily.stack().reset_index()
 
 restack_states_daily = restack_states_daily.rename(columns={"level_0":"Date","level_1":"State",0:"Cases"})
 
+
 #%%
 
+# % positive rate for testing
+
+states_df_og['Tests conducted (total)'] = pd.to_numeric(states_df_og['Tests conducted (total)'])
+states_df_og['pct_positive'] = states_df_og['Cumulative case count']/states_df_og['Tests conducted (total)'] * 100
+states_df_og = states_df_og.replace([np.inf, -np.inf], np.nan)
+testing_pct = states_df_og.pivot(index='Date', columns='State', values='pct_positive')
+testing_pct = testing_pct["2020-03-15":]
+
+testing_pct.index = testing_pct.index.strftime('%Y-%m-%d')
+
+def makeTestingLine(df):
+
+ 	lastUpdatedInt =  df.index[-1]
+	
+ 	template = [
+ 			{
+				"title": "Percentage of Covid-19 tests that are positive* in NSW and Victoria",
+				"subtitle": "Showing the percentage of tests that are positive in each state over time. A lower % is indicative of wider, less-targetted testing. Last updated {date}".format(date=lastUpdatedInt),
+				"footnote": "*States usually report the total number of tests conducted, rather than people tested, and positive cases rather than positive tests returned. So this is an approximation of % positive tests.",
+				"source": " Guardian Australia analysis of state and territory reports",
+				"dateFormat": "%Y-%m-%d",
+				"yScaleType":"",
+				"xAxisLabel": "",
+				"yAxisLabel": "% positive",
+				"minY": "0",
+				"maxY": "",
+				"x_axis_cross_y":"",
+				"periodDateFormat":"",
+				"margin-left": "50",
+				"margin-top": "30",
+				"margin-bottom": "20",
+				"margin-right": "10"
+ 			}
+		]
+ 	key = []
+ 	periods = []
+ 	labels = []
+ 	chartId = [{"type":"linechart"}]
+ 	df.fillna("", inplace=True)
+ 	df = df.reset_index()
+ 	chartData = df.to_dict('records')
+
+ 	yachtCharter(template=template, data=chartData, chartId=[{"type":"linechart"}], chartName="pct-testing-aus-2020{test}".format(test=test))
+
+makeTestingLine(testing_pct[['NSW','VIC']])
+
+#%%
+
+testing_cum = states_df_og.pivot(index='Date', columns='State', values='Tests conducted (total)')
+
+testing_daily = pd.DataFrame()
+
+for col in state_order:
+	print(col)
+	tempSeries = testing_cum[col].dropna()
+	tempSeries = tempSeries.sub(tempSeries.shift())
+	tempSeries.iloc[0] = testing_cum[col].dropna().iloc[0]
+	testing_daily = pd.concat([testing_daily, tempSeries], axis=1)
+
+testing_daily.iloc[0] = testing_cum.iloc[0]
+
+testing_daily = testing_daily["2020-05-18":]
+
+#%%
+
+
+testing_daily.index = testing_daily.index.strftime('%Y-%m-%d')
+
+def makeTestingBars(df):
+
+	df.rename(columns={"VIC": "Tests conducted"}, inplace=True)
+	lastUpdatedInt =  df.index[-1]
+	
+	template = [
+			{
+				"title": "Covid-19 tests conducted per day in Victoria",
+				"subtitle": "Showing the daily reported count of coronavirus tests conducted per day in Victoria. Last updated {date}".format(date=lastUpdatedInt),
+				"footnote": "",
+				"source": " | Health and Human Services Victoria",
+				"dateFormat": "%Y-%m-%d",
+				"xAxisLabel": "",
+				"yAxisLabel": "Cases",
+				"timeInterval":"day",
+				"tooltip":"TRUE",
+				"periodDateFormat":"",
+				"margin-left": "50",
+				"margin-top": "20",
+				"margin-bottom": "20",
+				"margin-right": "20",
+				"xAxisDateFormat": "%b %d"
+				
+			}
+		]
+	
+	periods = []
+	key=[]
+	chartId = [{"type":"stackedbar"}]
+	df.fillna('', inplace=True)
+	df = df.reset_index()
+	chartData = df.to_dict('records')
+
+	yachtCharter(template=template, data=chartData, chartId=chartId, chartName="vic-testing-daily{test}".format(test=test), key=key)
+
+makeTestingBars(testing_daily[['VIC']])
 
 
 #%%

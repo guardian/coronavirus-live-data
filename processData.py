@@ -9,11 +9,13 @@ import simplejson as json
 from datetime import datetime
 import requests
 import schedule
+import traceback
+from sendEmail import sendEmail
 
 #%%
 
 def runScripts():
-	
+	print(1/0)
 	state_order = ['NSW','VIC',	'QLD','SA', 'WA','TAS',	'ACT','NT']
 	
 	states = requests.get('https://interactive.guim.co.uk/docsdata/1q5gdePANXci8enuiS4oHUJxcxC13d6bjMRSicakychE.json').json()['sheets']
@@ -119,4 +121,13 @@ def runScripts():
 	
 	syncData(confirmedDailyData, "2020/03/coronavirus-widget-data", "confirmed_daily{preview}.json".format(preview=preview))
 
-runScripts()
+	print("Done, data updated")
+
+def doThings():
+	try:
+		runScripts()
+	except Exception:
+		print(traceback.format_exc())
+		sendEmail(traceback.format_exc(), "corona data alers", ["nick.evershed@theguardian.com"])
+
+doThings()			

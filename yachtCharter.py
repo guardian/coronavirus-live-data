@@ -25,7 +25,7 @@ def syncData(jsonObject,id):
 	print("JSON is updated")
 
 	print("data", "https://interactive.guim.co.uk/yacht-charter-data/{id}.json".format(id=id))
-	print("chart", "https://interactive.guim.co.uk/embed/aus/2020/yacht-charter-v4/index.html?key={id}&location=yacht-charter-data".format(id=id))
+	print("chart", "https://interactive.guim.co.uk/embed/aus/2020/yacht-charter-v5/index.html?key={id}&location=yacht-charter-data".format(id=id))
 	
 def yachtCharter(template, data, chartName, chartId=[{"type":"linechart"}], options=[],key=[], periods=[], labels=[]):
 
