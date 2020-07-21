@@ -633,7 +633,7 @@ makeStatesTestingChart(testing_pm)
 
 #%%
 
-hospitals = totals_df[['State or territory','Deaths','Current hospitalisation','Current ICU','Current ventilator use', 'Last updated']]
+hospitals = totals_df[['State or territory','Deaths','Current hospitalisation','Current ICU', 'Last updated']]
 
 def makeHospitalsTable(df):
 	
