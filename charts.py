@@ -22,7 +22,8 @@ getData()
 states = requests.get('https://interactive.guim.co.uk/docsdata/1q5gdePANXci8enuiS4oHUJxcxC13d6bjMRSicakychE.json').json()['sheets']
 
 #%%
-   
+
+pd.options.mode.chained_assignment = None  # default='warn'
 states_df = pd.DataFrame(states['updates'])
 states_df.Date = pd.to_datetime(states_df.Date, format="%d/%m/%Y")
 states_df['Cumulative case count'] = pd.to_numeric(states_df['Cumulative case count'])
@@ -115,7 +116,7 @@ def makeTestingLine(df):
  	template = [
  			{
 				"title": "Percentage of Covid-19 tests that are positive* in NSW and Victoria",
-				"subtitle": "Showing the percentage of tests that are positive in each state over time. A lower % is indicative of wider, less-targetted testing. Last updated {date}".format(date=lastUpdatedInt),
+				"subtitle": "Showing the percentage of tests that are positive in each state over time. A lower % is indicative of wider, less-targeted testing. Last updated {date}".format(date=lastUpdatedInt),
 				"footnote": "*States usually report the total number of tests conducted, rather than people tested, and positive cases rather than positive tests returned. So this is an approximation of % positive tests.",
 				"source": " Guardian Australia analysis of state and territory reports",
 				"dateFormat": "%Y-%m-%d",
@@ -368,14 +369,19 @@ def makeTimelineChart(df):
 			{"x1":"2020-03-05","x2":"2020-03-15","y1":120,"y2":0,"text":"South Korean arrivals blocked","align":"end","hide":""},
 			{"x1":"2020-03-11","x2":"2020-03-21","y1":240,"y2":0,"text":"Italy arrivals blocked","align":"end","hide":""},
 			{"x1":"2020-03-15","x2":"2020-03-25","y1":430,"y2":0,"text":"Outdoor gatherings limited to 500 persons","align":"end","hide":""},
-			{"x1":"2020-03-16","x2":"2020-03-26","y1":430,"y2":30,"text":"Self-isolation for overseas travellers, cruise ships blocked for 30 days","align":"end","hide":""},
+			{"x1":"2020-03-16","x2":"2020-03-26","y1":430,"y2":30,"text":"Isolation for OS travellers, cruise ships blocked","align":"end","hide":""},
 			{"x1":"2020-03-18","x2":"2020-03-28","y1":430,"y2":60,"text":"Indoor gatherings limited to 100 persons","align":"end","hide":""},
 			{"x1":"2020-03-19","x2":"2020-03-29","y1":430,"y2":90,"text":"Borders closed to non-citizens and residents","align":"end","hide":""},
 			{"x1":"2020-03-23","x2":"2020-04-02","y1":430,"y2":120,"text":"Pubs / clubs closed, restaurants take-away only","align":"end","hide":""},
 			{"x1":"2020-03-24","x2":"2020-04-03","y1":430,"y2":150,"text":"Ban on Australians travelling overseas","align":"end","hide":""},
 			{"x1":"2020-03-26","x2":"2020-04-05","y1":430,"y2":180,"text":"Expanded testing criteria","align":"end","hide":""},
 			{"x1":"2020-03-28","x2":"2020-04-07","y1":430,"y2":210,"text":"Mandatory isolation in hotels for travellers","align":"end","hide":""},
-			{"x1":"2020-03-30","x2":"2020-04-09","y1":430,"y2":0,"text":"All gatherings 2 persons only","align":"end","hide":""}]
+			{"x1":"2020-03-30","x2":"2020-04-09","y1":430,"y2":240,"text":"All gatherings 2 persons only","align":"end","hide":""},
+			{"x1":"2020-05-12","x2":"2020-05-22","y1":50, "y2":0, "text":"National restrictions eased", "align":"end"},
+			{"x1":"2020-06-1", "x2":"2020-06-11","y1":100, "y2":0, "text":"National restrictions eased", "align":"end"},
+			{"x1":"2020-06-22", "x2":"2020-07-02", "y1":150, "y2":0, "text":"VIC gatherings restricted", "align":"end"},
+			{"x1":"2020-07-02", "x2":"2020-07-12", "y1":300, "y2":0, "text":"VIC postcode lockdown", "align":"end"},
+			{"x1":"2020-07-09", "x2":"2020-07-19", "y1":440, "y2":0, "text":"VIC metro lockdown", "align":"end"}]
 	
 	details = [
 			{
@@ -391,7 +397,7 @@ def makeTimelineChart(df):
 				"maxY": "",
 				"periodDateFormat":"",
 				"margin-left": "40",
-				"margin-top": "250",
+				"margin-top": "270",
 				"margin-bottom": "20",
 				"margin-right": "20"
 			}
@@ -403,7 +409,7 @@ def makeTimelineChart(df):
 	df = df.reset_index()
 	chartData = df.to_dict('records')
 
-	syncDoc(template=details, data=chartData, chartId=chartId, chartName="1xEijW_9nGVP55-CtmMSyIdOYWP9YYwbs-xZYoAeHEso", labels=labels)
+	syncDoc(template=details, data=chartData, chartId=chartId, chartName="1xEijW_9nGVP55-CtmMSyIdOYWP9YYwbs-xZYoAeHEso{test}".format(test=test), labels=labels)
 
 makeTimelineChart(daily_total)
 
