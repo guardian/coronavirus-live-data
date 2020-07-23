@@ -1,6 +1,3 @@
-import plotly.graph_objs as go
-import plotly.io as pio
-from plotly.offline import plot
 from getData import getData
 from yachtCharter import yachtCharter
 from syncDoc import syncDoc
