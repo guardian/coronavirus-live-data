@@ -4,6 +4,7 @@ from syncDoc import syncDoc
 import pandas as pd
 import numpy as np
 import requests
+from datetime import datetime
 
 test = ""
 # test = "-test"
@@ -104,6 +105,8 @@ states_df_og = states_df_og.replace([np.inf, -np.inf], np.nan)
 testing_pct = states_df_og.pivot(index='Date', columns='State', values='pct_positive')
 testing_pct = testing_pct["2020-03-15":]
 
+#%%
+
 testing_pct.index = testing_pct.index.strftime('%Y-%m-%d')
 
 def makeTestingLine(df):
@@ -156,11 +159,12 @@ for col in state_order:
 	testing_daily = pd.concat([testing_daily, tempSeries], axis=1)
 
 testing_daily.iloc[0] = testing_cum.iloc[0]
+testing_daily.index = pd.to_datetime(testing_daily.index, format="%Y-%m-%d %H:%M:%S")
+
 
 testing_daily = testing_daily["2020-05-18":]
 
 #%%
-
 
 testing_daily.index = testing_daily.index.strftime('%Y-%m-%d')
 
