@@ -362,7 +362,7 @@ makeSince10DeathsChart(only10deaths)
 #%%
 
 def makeTimelineChart(df):
-	df = df[:-1]
+# 	df = df[:-1]
 	lastUpdatedInt = df.index[-1]	
 	
 	labels = [{"x1":"2020-02-01","x2":"2020-02-11","y1":50,"y2":0,"text":"China arrivals blocked","align":"end","hide":""},
@@ -387,7 +387,7 @@ def makeTimelineChart(df):
 	details = [
 			{
 				"title": "Timeline of coronavirus measures v daily case count",
-				"subtitle": "This chart shows the total number of cases reported each day for Australia, with annotations showing national measures introduced to limit the spread of the coronavirus. Measures are shown starting from the date they're introduced through to ten days later, which is a rough estimate of the time we might expect to see any effect on cases, according to <a href='https://pursuit.unimelb.edu.au/articles/flattening-the-curve-to-help-australia-s-hospitals-prepare'>researchers from the University of Melbourne</a>. Last updated {date}".format(date=lastUpdatedInt),
+				"subtitle": "This chart shows the total number of cases reported each day for Australia, with annotations showing national measures introduced to limit the spread of the coronavirus. Measures are shown starting from the date they're introduced through to ten days later, which is a rough estimate of the time we might expect to see any effect on cases, according to <a href='https://pursuit.unimelb.edu.au/articles/flattening-the-curve-to-help-australia-s-hospitals-prepare'>researchers from the University of Melbourne</a>. Most recent day may show incomplete data. Last updated {date}".format(date=lastUpdatedInt),
 				"footnote": "",
 				"source": "Guardian Australia, based on a chart by <a href='https://colab.research.google.com/drive/1X72xXEm1FCYpwo5OiRGhDUelMyicRj2L'>Ian Warrington</a>",
 				"dateFormat": "%Y-%m-%d",
