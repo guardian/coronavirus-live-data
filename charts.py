@@ -7,13 +7,14 @@ import requests
 from datetime import datetime
 
 test = ""
-# test = "-test"
+test = "-test"
 
 state_order = ['NSW','VIC',	'QLD','SA', 'WA','TAS',	'ACT','NT']
+state_order2 = ['NSW','VIC','QLD','SA', 'WA','TAS',	'ACT']
 
 #%%
 
-getData()
+# getData()
 
 #%%
 
@@ -24,13 +25,22 @@ states = requests.get('https://interactive.guim.co.uk/docsdata/1q5gdePANXci8enui
 pd.options.mode.chained_assignment = None  # default='warn'
 states_df = pd.DataFrame(states['updates'])
 states_df.Date = pd.to_datetime(states_df.Date, format="%d/%m/%Y")
+
+deaths_df = states_df
+
 states_df['Cumulative case count'] = pd.to_numeric(states_df['Cumulative case count'])
+deaths_df['Cumulative deaths'] = pd.to_numeric(states_df['Cumulative deaths'])
+
 states_df = states_df.dropna(axis=0,subset=['Cumulative case count'])
+deaths_df = deaths_df.dropna(axis=0,subset=['Cumulative deaths'])
+
 states_df = states_df.sort_values(['Date','State', 'Cumulative case count']).drop_duplicates(['State', 'Date'], keep='last')
+deaths_df = deaths_df.sort_values(['Date','State', 'Cumulative deaths']).drop_duplicates(['State', 'Date'], keep='last')
 
 states_df_og = states_df
 
 states_df = states_df.pivot(index='Date', columns='State', values='Cumulative case count')
+deaths_df = deaths_df.pivot(index='Date', columns='State', values='Cumulative deaths')
 
 #%%
 
@@ -49,6 +59,18 @@ for col in state_order:
 
 states_df_daily.iloc[0] = states_df.iloc[0]
 
+
+deaths_df_daily = pd.DataFrame()
+
+for col in state_order2:
+	print(col)
+	tempSeries = deaths_df[col].dropna()
+	tempSeries = tempSeries.sub(tempSeries.shift())
+	tempSeries.iloc[0] = deaths_df[col].dropna().iloc[0]
+	deaths_df_daily = pd.concat([deaths_df_daily, tempSeries], axis=1)
+
+deaths_df_daily.iloc[0] = states_df.iloc[0]
+
 #%%
 # states_df.at['2020-03-19', 'NT'] = 0
 # states_df.iloc[0] = 0
@@ -58,10 +80,12 @@ states_df_daily.iloc[0] = states_df.iloc[0]
 date_index = pd.date_range(start='2020-01-23', end=states_df.index[-1])
 
 states_df = states_df.reindex(date_index)
+deaths_df = deaths_df.reindex(date_index)
 
 states_df_daily = states_df_daily.reindex(date_index)
 
 states_df.index = states_df.index.strftime('%Y-%m-%d')
+deaths_df.index = deaths_df.index.strftime('%Y-%m-%d')
 
 states_df_daily = states_df_daily.fillna(0)
 states_df_daily.index = states_df_daily.index.strftime('%Y-%m-%d')
@@ -69,6 +93,11 @@ states_df_daily.index = states_df_daily.index.strftime('%Y-%m-%d')
 states_df = states_df.fillna(method='ffill')
 states_df = states_df.fillna(0)
 states_df = states_df[state_order]
+
+deaths_df = deaths_df.fillna(method='ffill')
+deaths_df = deaths_df.fillna(0)
+states_df = states_df[state_order2]
+
 
 total_cum = pd.DataFrame()
 total_cum['Total'] = states_df.sum(axis=1)
@@ -83,10 +112,12 @@ states_df_daily = states_df_daily[state_order]
 daily_total = pd.DataFrame()
 daily_total['Total'] = states_df_daily.sum(axis=1)
 
+deaths_total = pd.DataFrame()
+deaths_total['Deaths'] = deaths_df_daily.sum(axis=1)
+deaths_total.index = deaths_total.index.strftime('%Y-%m-%d')
 
 # daily_total['pct_change'] = daily_total['Total'].pct_change()
 # daily_total = daily_total["2020-03-10":]
-
 
 states_df_daily.to_csv('data-output/states-daily.csv')
 
@@ -227,7 +258,6 @@ def processData(filePath):
 	df = df.sort_index(ascending=1)
 	
 	df.index = df.index.strftime('%Y-%m-%d')
-	
 	
 	
 	return df
@@ -661,6 +691,45 @@ def makeHospitalsTable(df):
 	yachtCharter(template=template, data=chartData, chartId=chartId, options=options, chartName="deaths-hospital-corona-2020")
 
 makeHospitalsTable(hospitals)
+
+
+#%%
+
+def makeTotalDeathBars(df):
+
+	lastUpdatedInt =  df.index[-1]
+	
+	template = [
+			{
+				"title": "Deaths per day from Covid-19 in Australia",
+				"subtitle": "Showing the daily count of deaths as reported by states and territories. Dates used are the date of death where known, or the date reported. Last updated {date}".format(date=lastUpdatedInt),
+				"footnote": "",
+				"source": "",
+				"dateFormat": "%Y-%m-%d",
+				"xAxisLabel": "",
+				"yAxisLabel": "Deaths",
+				"timeInterval":"day",
+				"tooltip":"TRUE",
+				"periodDateFormat":"",
+				"margin-left": "50",
+				"margin-top": "20",
+				"margin-bottom": "20",
+				"margin-right": "20",
+				"xAxisDateFormat": "%b %d"
+				
+			}
+		]
+
+	periods = []
+	key = [{"key":"Deaths","colour":"rgb(204, 10, 17)"}]
+	chartId = [{"type":"annotatedbarchart"}]
+	df.fillna('', inplace=True)
+	df = df.reset_index()
+	chartData = df.to_dict('records')
+
+	yachtCharter(template=template, data=chartData, chartId=chartId, chartName="aus-total-corona-deaths{test}".format(test=test), key=key)
+
+makeTotalDeathBars(deaths_total)
 
 #%%
 
