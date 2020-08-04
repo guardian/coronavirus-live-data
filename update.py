@@ -22,8 +22,10 @@ def exist():
 		if sorted(json_data.items()) == sorted(data.items()):
 		    print("Same same")
 		else:
-		    print("Different")
-		    trigger()
+			print("Different")
+			with open(key + '.json', 'w') as outfile:
+				json.dump(data, outfile)
+				trigger()
 
 def trigger():		
 	if key == "1q5gdePANXci8enuiS4oHUJxcxC13d6bjMRSicakychE":
