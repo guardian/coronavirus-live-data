@@ -23,7 +23,6 @@ def exist():
 		json_data = json.load(f)
 		if sorted(json_data.items()) == sorted(data.items()):
 		    print("Same same")
-		    sendEmail(traceback.format_exc(), "NSW feed testing", ["andy.ball@theguardian.com"])
 		else:
 			print("Different")
 			with open(key + '.json', 'w') as outfile:
@@ -34,6 +33,7 @@ def trigger():
 	if key == "1q5gdePANXci8enuiS4oHUJxcxC13d6bjMRSicakychE":
 		print ("run processData.py")
 		import processData
+		sendEmail("The Australian coronavirus tracking googledoc has been updated and new feeds and charts have been created", "Australian coronavirus tracking", ["andy.ball@theguardian.com"])
 
 if args.key == "1q5gdePANXci8enuiS4oHUJxcxC13d6bjMRSicakychE":
 	key = args.key
