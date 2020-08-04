@@ -2,6 +2,8 @@ import requests
 import pathlib
 import simplejson as json
 import argparse
+import traceback
+from sendEmail import sendEmail
 
 parser = argparse.ArgumentParser()
 
@@ -21,6 +23,7 @@ def exist():
 		json_data = json.load(f)
 		if sorted(json_data.items()) == sorted(data.items()):
 		    print("Same same")
+		    sendEmail(traceback.format_exc(), "NSW feed testing", ["andy.ball@theguardian.com"])
 		else:
 			print("Different")
 			with open(key + '.json', 'w') as outfile:
