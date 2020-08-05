@@ -33,7 +33,7 @@ def trigger():
 	if key == "1q5gdePANXci8enuiS4oHUJxcxC13d6bjMRSicakychE":
 		print ("run processData.py")
 		import processData
-		sendEmail("The Australian coronavirus tracking googledoc has been updated and new feeds and charts have been created", "Australian coronavirus tracking", ["andy.ball@theguardian.com","nick.evershed@theguardian.com"])
+		sendEmail("The Australian coronavirus tracking googledoc has been updated and new feeds and charts have been created", "Australian coronavirus tracking", ["andy.ball@theguardian.com","nick.evershed@theguardian.com","david.constable@theguardian.com"])
 
 if args.key == "1q5gdePANXci8enuiS4oHUJxcxC13d6bjMRSicakychE":
 	key = args.key
