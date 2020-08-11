@@ -7,7 +7,7 @@ import requests
 from datetime import datetime
 
 test = ""
-test = "-test"
+# test = "-test"
 
 state_order = ['NSW','VIC',	'QLD','SA', 'WA','TAS',	'ACT','NT']
 state_order2 = ['NSW','VIC','QLD','SA', 'WA','TAS',	'ACT']
